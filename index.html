@@ -1,4 +1,11 @@
-<!doctype html><html><head><meta charset=utf8><title>工程カレンダー</title><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<!doctype html>
+<html lang="ja"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#e6def5">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="工程カレンダー"><meta name="apple-mobile-web-app-status-bar-style" content="default">
+<link rel="manifest" href="manifest.webmanifest"><link rel="icon" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<style>:root{color-scheme:light;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
 <title>工程カレンダー</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -217,6 +224,8 @@ details.fin summary{min-height:44px;display:flex;align-items:center;font-weight:
 #home .co .rt small{font-size:12px;line-height:1.35}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
+<style>[data-act=mat]{display:none!important}</style>
+</head><body>
 
 <div class="wrap" id="app">
   <header class="top">
@@ -278,18 +287,8 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
 
 /* ---------- data ---------- */
-function seed(){
-  const t=todayS();
-  const L=[['09-01','peel'],['09-02','peel'],['09-03','peel'],['09-04','peel'],['09-07','peel'],
-    ['09-08','plant','(1)'],['09-08','peel'],['09-10','plant','(2-4)'],['09-10','tea'],['09-11','peel'],
-    ['09-14','harvest','(8)'],['09-14','plant','(7)'],['09-15','harvest','(10)'],['09-16','soy'],
-    ['09-17','plant','(8・11)'],['09-17','peel'],['09-18','peel'],
-    ['09-24','harvest','(14・17)'],['09-24','plant','(17・18)'],['09-24','tea'],
-    ['09-25','peel'],['09-25','event','健診'],['09-28','peel'],['09-29','peel'],
-    ['09-30','plant','(25)'],['09-30','soy'],['09-30','ship','？'],['10-01','peel'],['10-02','peel']];
-  return normalize({updatedAt:0,items:L.map((r,i)=>{const date='2026-'+r[0];return {id:'s'+i,cid:'c-alba',date,type:r[1],text:r[2]||'',done:date<t,o:i}})});
-}
-const DEF_CO=[{id:'c-safety',name:'日本セーフティ株'},{id:'c-ss',name:'ssサポート'},{id:'c-kdc',name:'KDC'},{id:'c-alba',name:'AlbaLink'}];
+function seed(){return normalize({updatedAt:0,items:[]})}
+const DEF_CO=[];
 function normalize(d){
   if(!d||!Array.isArray(d.items))d={updatedAt:0,items:[]};
   if(!Array.isArray(d.companies)||!d.companies.length)d.companies=DEF_CO.map(c=>({id:c.id,name:c.name}));
@@ -580,6 +579,10 @@ function sheetHTML(){
       (x.unk.length?'<div><label>読み取れなかったセル（'+x.unk.length+'）</label><ul class="list">'+x.unk.slice(0,12).map(c=>'<li class="row"><span class="rt"><b>'+esc(c.sh)+'の '+esc(c.cell)+'</b><small>'+esc(c.tx)+'</small></span></li>').join('')+'</ul></div>':'')+
       '<p class="hint">この内容と同じ表に「Excelに反映」で書き戻せます。</p><div class="acts"><button class="btn primary" data-act="close">閉じる</button></div></div>';
   }
+  if(sheet.kind==='bk'){
+    const x=sheet.res;
+    return '<div class="bg" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="データの読み込み"><div class="grab"></div><h2>このデータに置き換えますか</h2><p>企業: <b>'+x.companies+'</b>社 ／ 従業員: <b>'+x.workers+'</b>名 ／ 予定: <b>'+x.items+'</b>件</p><p class="hint">今このアプリに入っているデータは、読み込んだ内容に置き換わります。必要なら、先に「データを書き出す」で控えを取ってください。</p><div class="acts"><button class="btn primary" data-act="bkok">置き換える</button><button class="btn" data-act="close">やめる</button></div></div>';
+  }
   if(sheet.kind==='xr'){
     const x=sheet.res;
     return '<div class="bg" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Excel反映の結果"><div class="grab"></div><h2>Excelに反映しました</h2>'+
@@ -626,6 +629,7 @@ function renderHome(){
     return '<li><button class="co" data-act="enter" data-cid="'+c.id+'" style="--c:'+coCol(c.id)+'"><span class="av" aria-hidden="true">'+esc(Array.from(c.name)[0]||'?')+'</span><span class="rt"><b>'+esc(c.name)+'</b><small>従業員'+S.workers.filter(w=>w.cid===c.id).length+'名<br>今日あと'+td+'件 ・ 未完了'+op+'件</small></span><span class="arrow" aria-hidden="true">›</span></button></li>'}).join('')+'</ul>'+
     '<section class="panel" aria-label="みんなのカレンダー"><p class="eyebrow" style="font-size:13px">みんなのカレンダー（全企業まとめ・日付を押すと内訳）</p>'+vCal()+'</section>'+
     '<form class="card" id="cform"><div class="ah"><b>企業を追加</b></div><div class="qline"><input type="text" id="c-name" placeholder="企業名を入力（例: ○○株式会社）" autocomplete="off" aria-label="企業名"><button class="btn primary" type="submit">追加</button></div><p class="err" id="c-err" hidden></p></form>'+'<button class="btn xlb" data-act="xlsx" data-scope="all"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>全企業をExcel出力</button>';
+  h.insertAdjacentHTML('beforeend','<div class="sumg"><button class="btn" data-act="bkout">データを書き出す（バックアップ）</button><button class="btn" data-act="bkin">データを読み込む</button></div><input type="file" id="bk-file" accept=".json,application/json" hidden>');
   document.getElementById('c-name').value=keep;
 }
 function renderAll(){
@@ -903,15 +907,14 @@ function buildXlsx(scope){
 }
 async function exportXlsx(scopeSel){
   if(!window.ExcelJS){toast('Excelの部品を読み込めませんでした');return}
-  const dl=await (window.claude&&window.claude.use?window.claude.use('downloads'):null);
-  const dl2=dl||{save:async o=>{const u=URL.createObjectURL(o.data),a=document.createElement('a');a.href=u;a.download=o.filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}};
+  const dl=await getDl();
   const scope=scopeSel==='all'?'all':view==='wk'?'wk':'co';
   const d=new Date(),stamp=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate());
   const nm=scope==='all'?'全企業':xlName(coById(cid).name)+(scope==='wk'?'_'+xlName(wById(wid).name):'_全員');
   try{
     toast('Excelを作っています…');
     const buf=await buildXlsx(scope).xlsx.writeBuffer();
-    await dl2.save({filename:'工程カレンダー_'+nm+'_'+stamp+'.xlsx',data:new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})});
+    await dl.save({filename:'工程カレンダー_'+nm+'_'+stamp+'.xlsx',data:new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})});
     toast('Excelを保存しました');
   }catch(e){
     if(e&&e.code==='declined'){toast('保存をやめました');return}
@@ -954,8 +957,7 @@ function planCells(items){
 }
 async function fillExcel(file){
   if(!window.JSZip){toast('Excelの部品を読み込めませんでした');return}
-  const dl=await (window.claude&&window.claude.use?window.claude.use('downloads'):null);
-  const dl2=dl||{save:async o=>{const u=URL.createObjectURL(o.data),a=document.createElement('a');a.href=u;a.download=o.filename;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(u),4000)}};
+  const dl=await getDl();
   toast('Excelを読み込んでいます…');
   try{
     const zip=await JSZip.loadAsync(await file.arrayBuffer());
@@ -1074,7 +1076,7 @@ async function fillExcel(file){
     const d=new Date(),stamp=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate());
     const base=xlName(file.name.replace(/\.xlsx$/i,''))||'作業計画表';
     sheet={kind:'xr',res,rebuild:true};renderAll();
-    await dl2.save({filename:base+'_アプリ反映_'+stamp+'.xlsx',data:blob});
+    await dl.save({filename:base+'_アプリ反映_'+stamp+'.xlsx',data:blob});
     toast('Excelを保存しました');
   }catch(e){
     if(e&&e.code==='declined'){toast('保存をやめました');return}
@@ -1165,10 +1167,29 @@ function syncTop(){const b=document.getElementById('totop');if(b)b.hidden=window
 window.addEventListener('scroll',syncTop,{passive:true});
 try{history.scrollRestoration='manual'}catch(e){}
 
+/* ---------- 単独アプリ用：保存と控え ---------- */
+function saveBlob(name,blob){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},3000)}
+async function getDl(){
+  const d=await (window.claude&&window.claude.use?window.claude.use('downloads'):null);
+  return d||{save:async r=>{saveBlob(r.filename,r.data instanceof Blob?r.data:new Blob([r.data]));return {status:'saved'}}};
+}
+let pendingBk=null;
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  if(el.dataset.act==='bkout'){const d=new Date();saveBlob('工程カレンダー_バックアップ_'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'.json',new Blob([JSON.stringify(S)],{type:'application/json'}));toast('バックアップを保存しました')}
+  if(el.dataset.act==='bkin'){document.getElementById('bk-file').click()}
+  if(el.dataset.act==='bkok'&&pendingBk){S=normalize(pendingBk);S.updatedAt=Date.now();writeLocal();pendingBk=null;sheet=null;toast('データを読み込みました');renderAll()}
+});
+document.addEventListener('change',e=>{
+  if(e.target.id!=='bk-file')return;
+  const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
+  f.text().then(t=>{try{const o=JSON.parse(t);if(!o||!Array.isArray(o.items))throw 0;pendingBk=o;sheet={kind:'bk',res:{companies:(o.companies||[]).length,workers:(o.workers||[]).length,items:o.items.length},rebuild:true};renderAll()}catch(_){toast('このファイルは読み込めません')}});
+});
 /* ---------- boot ---------- */
 S=readLocal();S=S?normalize(S):seed();
 renderAll();window.scrollTo(0,0);syncTop();
 initDb();
 </script>
 
+<script>if('serviceWorker' in navigator&&location.protocol!=='file:'){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}</script>
 </body></html>
