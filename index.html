@@ -326,7 +326,7 @@ let dbDoc=null,dbBusy=false,dbPending=false,dbTimer=0;
 function setStore(t){document.getElementById('store').textContent=t}
 function save(){
   S.updatedAt=Date.now();writeLocal();
-  if(dbDoc){clearTimeout(dbTimer);dbTimer=setTimeout(pushDb,600)}
+  syncSoon();
 }
 async function pushDb(){
   if(!dbDoc)return;
@@ -337,7 +337,7 @@ async function pushDb(){
   dbBusy=false;
   if(dbPending){dbPending=false;pushDb()}
 }
-async function initDb(){
+async function initDb(){return;
   try{
     const db=await (window.claude&&window.claude.use?window.claude.use('db'):null);
     if(!db){setStore('この端末に保存');return}
@@ -579,9 +579,12 @@ function sheetHTML(){
       (x.unk.length?'<div><label>読み取れなかったセル（'+x.unk.length+'）</label><ul class="list">'+x.unk.slice(0,12).map(c=>'<li class="row"><span class="rt"><b>'+esc(c.sh)+'の '+esc(c.cell)+'</b><small>'+esc(c.tx)+'</small></span></li>').join('')+'</ul></div>':'')+
       '<p class="hint">この内容と同じ表に「Excelに反映」で書き戻せます。</p><div class="acts"><button class="btn primary" data-act="close">閉じる</button></div></div>';
   }
+  if(sheet.kind==='sy'){
+    return '<div class="bg" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="共有の設定"><div class="grab"></div><h2>みんなで同じデータを使う</h2><p class="hint">'+esc(syStatus())+'</p><div><label for="sy-url">共有URL（GASのウェブアプリのURL）</label><input type="text" id="sy-url" value="'+esc(syUrl)+'" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false"></div><div class="acts"><button class="btn primary" data-act="syok">同期する</button>'+(syUrl?'<button class="btn" data-act="sylink">共有リンクをコピー</button><button class="btn danger" data-act="syoff">共有をやめる</button>':'')+'<button class="btn" data-act="close">閉じる</button></div><p class="hint">共有リンクを、ほかの人に送ると、開くだけで同じ設定になります。このURLを知っている人は、データを見たり変えたりできます。</p></div>';
+  }
   if(sheet.kind==='bk'){
     const x=sheet.res;
-    return '<div class="bg" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="データの読み込み"><div class="grab"></div><h2>このデータに置き換えますか</h2><p>企業: <b>'+x.companies+'</b>社 ／ 従業員: <b>'+x.workers+'</b>名 ／ 予定: <b>'+x.items+'</b>件</p><p class="hint">今このアプリに入っているデータは、読み込んだ内容に置き換わります。必要なら、先に「データを書き出す」で控えを取ってください。</p><div class="acts"><button class="btn primary" data-act="bkok">置き換える</button><button class="btn" data-act="close">やめる</button></div></div>';
+    return '<div class="bg" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="データの読み込み"><div class="grab"></div><h2>このデータに置き換えますか</h2><p>企業: <b>'+x.companies+'</b>社 ／ 従業員: <b>'+x.workers+'</b>名 ／ 予定: <b>'+x.items+'</b>件</p><p class="hint">今このアプリに入っているデータは、読み込んだ内容に置き換わります。必要なら、先に「データを書き出す」で控えを取ってください。</p>'+(syUrl?'<p class="hint">共有中のため、ほかの端末のデータも、この内容に合わせて置き換わります。</p>':'')+'<div class="acts"><button class="btn primary" data-act="bkok">置き換える</button><button class="btn" data-act="close">やめる</button></div></div>';
   }
   if(sheet.kind==='xr'){
     const x=sheet.res;
@@ -629,7 +632,7 @@ function renderHome(){
     return '<li><button class="co" data-act="enter" data-cid="'+c.id+'" style="--c:'+coCol(c.id)+'"><span class="av" aria-hidden="true">'+esc(Array.from(c.name)[0]||'?')+'</span><span class="rt"><b>'+esc(c.name)+'</b><small>従業員'+S.workers.filter(w=>w.cid===c.id).length+'名<br>今日あと'+td+'件 ・ 未完了'+op+'件</small></span><span class="arrow" aria-hidden="true">›</span></button></li>'}).join('')+'</ul>'+
     '<section class="panel" aria-label="みんなのカレンダー"><p class="eyebrow" style="font-size:13px">みんなのカレンダー（全企業まとめ・日付を押すと内訳）</p>'+vCal()+'</section>'+
     '<form class="card" id="cform"><div class="ah"><b>企業を追加</b></div><div class="qline"><input type="text" id="c-name" placeholder="企業名を入力（例: ○○株式会社）" autocomplete="off" aria-label="企業名"><button class="btn primary" type="submit">追加</button></div><p class="err" id="c-err" hidden></p></form>'+'<button class="btn xlb" data-act="xlsx" data-scope="all"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>全企業をExcel出力</button>';
-  h.insertAdjacentHTML('beforeend','<div class="sumg"><button class="btn" data-act="bkout">データを書き出す（バックアップ）</button><button class="btn" data-act="bkin">データを読み込む</button></div><input type="file" id="bk-file" accept=".json,application/json" hidden>');
+  h.insertAdjacentHTML('beforeend','<div class="sumg"><button class="btn" data-act="bkout">データを書き出す（バックアップ）</button><button class="btn" data-act="bkin">データを読み込む</button></div><div class="sumg"><button class="btn" data-act="sy">共有の設定（みんなで同じデータ）</button></div><input type="file" id="bk-file" accept=".json,application/json" hidden>');
   document.getElementById('c-name').value=keep;
 }
 function renderAll(){
@@ -1178,17 +1181,124 @@ document.addEventListener('click',e=>{
   const el=e.target.closest('[data-act]');if(!el)return;
   if(el.dataset.act==='bkout'){const d=new Date();saveBlob('工程カレンダー_バックアップ_'+d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'.json',new Blob([JSON.stringify(S)],{type:'application/json'}));toast('バックアップを保存しました')}
   if(el.dataset.act==='bkin'){document.getElementById('bk-file').click()}
-  if(el.dataset.act==='bkok'&&pendingBk){S=normalize(pendingBk);S.updatedAt=Date.now();writeLocal();pendingBk=null;sheet=null;toast('データを読み込みました');renderAll()}
+  if(el.dataset.act==='bkok'&&pendingBk){S=normalize(pendingBk);save();pendingBk=null;sheet=null;toast('データを読み込みました');renderAll()}
 });
 document.addEventListener('change',e=>{
   if(e.target.id!=='bk-file')return;
   const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
   f.text().then(t=>{try{const o=JSON.parse(t);if(!o||!Array.isArray(o.items))throw 0;pendingBk=o;sheet={kind:'bk',res:{companies:(o.companies||[]).length,workers:(o.workers||[]).length,items:o.items.length},rebuild:true};renderAll()}catch(_){toast('このファイルは読み込めません')}});
 });
+/* ---------- 共有（Googleスプレッドシート + GAS） ---------- */
+const SYK='koutei-sync-url',SYB='koutei-sync-base',SYR='koutei-sync-rev',SYI='koutei-sync-init';
+let syUrl='',syBase={},syRev=0,syInit=false,syBusy=false,syTimer=0,syAgain=false,syMsg='',syOk=false;
+function syLoad(){try{syUrl=localStorage.getItem(SYK)||'';syBase=JSON.parse(localStorage.getItem(SYB)||'{}');syRev=+localStorage.getItem(SYR)||0;syInit=localStorage.getItem(SYI)==='1'}catch(e){}}
+function sySaveMeta(){try{localStorage.setItem(SYK,syUrl);localStorage.setItem(SYB,JSON.stringify(syBase));localStorage.setItem(SYR,String(syRev));localStorage.setItem(SYI,syInit?'1':'0')}catch(e){}}
+const syH=s=>{let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return h+':'+s.length};
+function syRecs(){
+  const m={};
+  S.companies.forEach(c=>m['c:'+c.id]=JSON.stringify(c));
+  S.workers.forEach(w=>m['w:'+w.id]=JSON.stringify(w));
+  S.items.forEach(i=>m['i:'+i.id]=JSON.stringify(i));
+  m['x:gone']=JSON.stringify(S.xlGone||[]);
+  return m;
+}
+function syStatus(){
+  if(!syUrl)return '共有は未設定です。この端末だけに保存されます。';
+  return syMsg||'共有の準備中です';
+}
+function syLabel(){setStore(!syUrl?'この端末に保存':syBusy?'同期中…':syOk?'共有中':'同期できません（この端末には保存済み）')}
+async function syPost(o){
+  const res=await fetch(syUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(o),redirect:'follow'});
+  if(!res.ok)throw new Error('http '+res.status);
+  const j=await res.json();
+  if(!j||!j.ok)throw new Error((j&&j.error)||'ng');
+  return j;
+}
+function syApply(r,snap){
+  const now=syRecs();let n=0;
+  const put=(arr,o)=>{const i=arr.findIndex(x=>x.id===o.id);if(i<0)arr.push(o);else arr[i]=o};
+  const del=(arr,id)=>{const i=arr.findIndex(x=>x.id===id);if(i>=0)arr.splice(i,1)};
+  (r.recs||[]).forEach(rec=>{
+    const k=rec.k;
+    if(syH(now[k]||'')!==syH(snap[k]||''))return;
+    const same=rec.d?!(k in now):now[k]===rec.j;
+    if(!same){
+      n++;
+      const id=k.slice(2),t=k[0];
+      if(t==='x'){if(!rec.d){try{S.xlGone=JSON.parse(rec.j)}catch(e){}}}
+      else{
+        const arr=t==='c'?S.companies:t==='w'?S.workers:S.items;
+        if(rec.d)del(arr,id);else{try{put(arr,JSON.parse(rec.j))}catch(e){}}
+      }
+    }
+    syBase[k]=rec.d?{d:1}:{h:syH(rec.j)};
+  });
+  syRev=Math.max(syRev,r.rev||0);
+  return n;
+}
+async function syncNow(){
+  if(!syUrl)return syLabel();
+  if(syBusy){syAgain=true;return}
+  syBusy=true;syLabel();
+  try{
+    let again=false,guard=0;
+    do{
+      again=false;guard++;
+      const first=!syInit;
+      const snap=syRecs(),changes=[],t=Date.now();
+      if(!first){
+        for(const k in snap){const h=syH(snap[k]);if(!syBase[k]||syBase[k].d||syBase[k].h!==h)changes.push({k,j:snap[k],t})}
+        for(const k in syBase){if(!(k in snap)&&!syBase[k].d)changes.push({k,d:1,t})}
+      }
+      const r=await syPost({since:first?0:syRev,changes});
+      const n=syApply(r,snap);syInit=true;
+      if(n){
+        writeLocal();
+        if(view!=='home'&&!coById(cid))view='home';
+        if(view==='wk'&&!S.workers.some(w=>w.id===wid))view='co';
+        if(!sheet)renderAll();
+      }
+      sySaveMeta();
+      if(first)again=true;
+    }while(again&&guard<3);
+    syOk=true;syMsg='共有できています（'+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})+'に同期）';
+  }catch(e){syOk=false;syMsg='同期できませんでした。電波とURLを確かめてください。このまま使っても、この端末には保存されます。'}
+  syBusy=false;syLabel();
+  if(sheet&&sheet.kind==='sy'){sheet.rebuild=true;renderAll()}
+  if(syAgain){syAgain=false;syncSoon()}
+}
+function syncSoon(){if(!syUrl)return;clearTimeout(syTimer);syTimer=setTimeout(syncNow,1500)}
+function syLink(){return location.origin+location.pathname+'#s='+encodeURIComponent(syUrl)}
+function syncInit(){
+  syLoad();
+  try{
+    const m=/[#&]s=([^&]+)/.exec(location.hash);
+    if(m){const u=decodeURIComponent(m[1]);if(/^https:\/\/script\.google\.com\//.test(u)&&u!==syUrl){syUrl=u;syBase={};syRev=0;syInit=false;sySaveMeta()}history.replaceState(null,'',location.pathname+location.search)}
+  }catch(e){}
+  syLabel();
+  if(syUrl)syncNow();
+  document.addEventListener('visibilitychange',()=>{if(!document.hidden)syncNow()});
+  window.addEventListener('online',syncNow);
+  setInterval(()=>{if(!document.hidden)syncNow()},30000);
+}
+document.addEventListener('click',async e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  const a=el.dataset.act;
+  if(a==='sy'){sheet={kind:'sy',rebuild:true};renderAll()}
+  if(a==='syok'){
+    const u=(document.getElementById('sy-url').value||'').trim();
+    if(!/^https:\/\/script\.google\.com\/.+/.test(u)){toast('GASのURLを入れてください');return}
+    if(u!==syUrl){syUrl=u;syBase={};syRev=0;syInit=false;sySaveMeta()}
+    syMsg='同期しています…';await syncNow();
+  }
+  if(a==='sylink'){try{await navigator.clipboard.writeText(syLink());toast('共有リンクをコピーしました')}catch(_){toast('コピーできませんでした')}}
+  if(a==='syoff'){syUrl='';syBase={};syRev=0;syInit=false;syMsg='';syOk=false;sySaveMeta();syLabel();sheet=null;renderAll();toast('共有をやめました')}
+});
+
 /* ---------- boot ---------- */
 S=readLocal();S=S?normalize(S):seed();
 renderAll();window.scrollTo(0,0);syncTop();
-initDb();
+initDb();syncInit();
 </script>
 
 <script>if('serviceWorker' in navigator&&location.protocol!=='file:'){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}</script>
