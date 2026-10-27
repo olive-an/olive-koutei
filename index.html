@@ -235,7 +235,7 @@ details.fin summary{min-height:44px;display:flex;align-items:center;font-weight:
   </header>
   <section id="home" class="stack"></section>
   <div id="work" class="stack" hidden>
-    <div class="crow"><div class="crow-top"><button class="btn sm" id="backbtn" data-act="back">‹ 企業一覧</button><button class="btn sm" id="editbtn" data-act="coedit">名前の変更・削除</button></div><p class="crumb" id="ccrumb" hidden></p><h2 id="cname"></h2><label class="wsel" for="wsel"><span>従業員</span><select id="wsel" aria-label="従業員を選ぶ"></select></label><button class="btn xlb" data-act="xlsx" data-scope="cur"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>Excel出力</button><button class="btn xlb" data-act="xlfill"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 20h14"/></svg>Excelに反映（元のExcelに書き込む）</button><button class="btn xlb" data-act="xlimp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14" transform="rotate(180 12 12)"/></svg>Excelから取り込む（この表に合わせる）</button><input type="file" id="xl-imp" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden><div class="card" style="gap:2px;padding:8px 14px"><label class="limrow"><input type="checkbox" id="xo-items" checked><span>アプリの予定を書き込む</span></label><label class="limrow"><input type="checkbox" id="xo-peel" checked><span>皮の翌日から5日間を黄色にする</span></label><label class="limrow"><input type="checkbox" id="xo-plant" checked><span>植のあと4日間を緑にする</span></label><label class="limrow"><input type="checkbox" id="xo-harv"><span>収のセルを赤にする</span></label></div><input type="file" id="xl-file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></div>
+    <div class="crow"><div class="crow-top"><button class="btn sm" id="backbtn" data-act="back">‹ 企業一覧</button><button class="btn sm" id="editbtn" data-act="coedit">名前の変更・削除</button></div><p class="crumb" id="ccrumb" hidden></p><h2 id="cname"></h2><label class="wsel" for="wsel"><span>従業員</span><select id="wsel" aria-label="従業員を選ぶ"></select></label><button class="btn xlb" data-act="xlsx" data-scope="cur"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>Excel出力</button><button class="btn xlb" data-act="xlprint"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 9V4h10v5M7 17H5v-6h14v6h-2M7 14h10v6H7z"/></svg>印刷用Excel（このカレンダー）</button><button class="btn xlb" data-act="xlfill"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15V3M7 8l5-5 5 5M5 20h14"/></svg>Excelに反映（元のExcelに書き込む）</button><button class="btn xlb" data-act="xlimp"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14" transform="rotate(180 12 12)"/></svg>Excelから取り込む（この表に合わせる）</button><input type="file" id="xl-imp" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden><div class="card" style="gap:2px;padding:8px 14px"><label class="limrow"><input type="checkbox" id="xo-items" checked><span>アプリの予定を書き込む</span></label><label class="limrow"><input type="checkbox" id="xo-peel" checked><span>皮の翌日から5日間を黄色にする</span></label><label class="limrow"><input type="checkbox" id="xo-plant" checked><span>植のあと4日間を緑にする</span></label><label class="limrow"><input type="checkbox" id="xo-harv"><span>収のセルを赤にする</span></label></div><input type="file" id="xl-file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden></div>
     <div id="wkonly" class="stack" hidden>
     <section class="card" id="alert" aria-label="近い予定"></section>
     <section><p class="mh">メニュー</p><nav class="menu" id="menu" aria-label="画面の切り替え"></nav></section>
@@ -655,7 +655,7 @@ function renderHome(){
     return '<li><button class="co" data-act="enter" data-cid="'+c.id+'" style="--c:'+coCol(c.id)+'"><span class="av" aria-hidden="true">'+esc(Array.from(c.name)[0]||'?')+'</span><span class="rt"><b>'+esc(c.name)+'</b><small>従業員'+S.workers.filter(w=>w.cid===c.id).length+'名<br>今日あと'+td+'件 ・ 未完了'+op+'件</small></span><span class="arrow" aria-hidden="true">›</span></button></li>'}).join('')+'</ul>'+
     '<section class="panel" aria-label="みんなのカレンダー"><p class="eyebrow" style="font-size:13px">みんなのカレンダー（全企業まとめ・日付を押すと内訳）</p>'+vCal()+'</section>'+
     '<form class="card" id="cform"><div class="ah"><b>企業を追加</b></div><div class="qline"><input type="text" id="c-name" placeholder="企業名を入力（例: ○○株式会社）" autocomplete="off" aria-label="企業名"><button class="btn primary" type="submit">追加</button></div><p class="err" id="c-err" hidden></p></form>'+'<button class="btn xlb" data-act="xlsx" data-scope="all"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>全企業をExcel出力</button>';
-  h.insertAdjacentHTML('beforeend','<details class="adm"><summary>管理用（ふだんは使いません）　版 v5</summary><div class="sumg"><button class="btn" data-act="bkout">データを書き出す（バックアップ）</button><button class="btn" data-act="bkin">データを読み込む</button></div><div class="sumg"><button class="btn" data-act="adin">予定を追加で取り込む（上書きしない）</button><button class="btn" data-act="sy">共有の設定</button></div><input type="file" id="ad-file" accept=".json,application/json" hidden></details><input type="file" id="bk-file" accept=".json,application/json" hidden>');
+  h.insertAdjacentHTML('beforeend','<details class="adm"><summary>管理用（ふだんは使いません）　版 v6</summary><div class="sumg"><button class="btn" data-act="bkout">データを書き出す（バックアップ）</button><button class="btn" data-act="bkin">データを読み込む</button></div><div class="sumg"><button class="btn" data-act="adin">予定を追加で取り込む（上書きしない）</button><button class="btn" data-act="sy">共有の設定</button></div><input type="file" id="ad-file" accept=".json,application/json" hidden></details><input type="file" id="bk-file" accept=".json,application/json" hidden>');
   document.getElementById('c-name').value=keep;
 }
 function renderAll(){
@@ -728,6 +728,7 @@ document.addEventListener('click',e=>{
   if(a==='flow'){sheet={kind:'flow',rebuild:true};renderAll();return}
   if(a==='mat'){sheet={kind:'mat',rebuild:true};renderAll();return}
   if(a==='xlsx')return exportXlsx(el.dataset.scope);
+  if(a==='xlprint')return printXlsx();
   if(a==='xlimp'){document.getElementById('xl-imp').click();return}
   if(a==='xlfill'){sheet={kind:'xs',ym:cur[0]+'-'+pad(cur[1]+1),rebuild:true};renderAll();return}
   if(a==='back'){view=view==='wk'?'co':'home';sheet=null;timer=null;renderAll();window.scrollTo(0,0);return}
@@ -930,6 +931,60 @@ function buildXlsx(scope){
     ws.pageSetup={orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:0};
   }
   return wb;
+}
+/* ---------- 個別カレンダーを、印刷用のExcelにする ---------- */
+function buildPrintXlsx(){
+  const y=cur[0],m=cur[1],co=coById(cid),wk=view==='wk'?wById(wid):null;
+  let items=S.items.filter(i=>i.cid===cid&&i.date);
+  if(wk)items=items.filter(i=>i.wid===wid||(i.wid===''&&isMS(i.type)));
+  const cs=getComputedStyle(document.documentElement);
+  const tc=t=>{const v=cs.getPropertyValue('--t-'+t).trim();return /^#[0-9a-f]{6}$/i.test(v)?'FF'+v.slice(1).toUpperCase():'FF1D2A22'};
+  const wb=new ExcelJS.Workbook();wb.creator='工程カレンダー';wb.created=new Date();
+  const ws=wb.addWorksheet('カレンダー',{pageSetup:{paperSize:9,orientation:'landscape',fitToPage:true,fitToWidth:1,fitToHeight:1,horizontalCentered:true,margins:{left:0.4,right:0.4,top:0.5,bottom:0.5,header:0.2,footer:0.2}},headerFooter:{oddFooter:'&Lおりーぶ庵 ウェル工房ALIVE&R&D'}});
+  const THIN={style:'thin',color:{argb:'FF8A94A0'}},BOX={top:THIN,left:THIN,bottom:THIN,right:THIN};
+  for(let k=1;k<=7;k++)ws.getColumn(k).width=22;
+  ws.mergeCells('A1:G1');
+  const t1=ws.getCell('A1');t1.value=y+'年'+(m+1)+'月　'+co.name+'　'+(wk?wk.name:'全員');
+  t1.font={bold:true,size:18};t1.alignment={vertical:'middle'};ws.getRow(1).height=34;
+  ['日','月','火','水','木','金','土'].forEach((d,k)=>{
+    const c=ws.getCell(2,k+1);c.value=d;c.font={bold:true,size:12,color:{argb:'FFFFFFFF'}};c.alignment={horizontal:'center',vertical:'middle'};c.border=BOX;
+    c.fill={type:'pattern',pattern:'solid',fgColor:{argb:k===0?'FFC0392B':k===6?'FF2A5FB0':'FF4B5563'}};
+  });
+  ws.getRow(2).height=22;
+  const map={};items.forEach(i=>(map[i.date]=map[i.date]||[]).push(i));
+  const f=new Date(y,m,1),dim=new Date(y,m+1,0).getDate(),rows=Math.ceil((f.getDay()+dim)/7);
+  for(let r=0;r<rows;r++){
+    const row=ws.getRow(3+r);let lines=1;
+    for(let c=0;c<7;c++){
+      const cell=row.getCell(c+1),d=new Date(y,m,1-f.getDay()+r*7+c);cell.border=BOX;cell.alignment={vertical:'top',wrapText:true};
+      if(d.getMonth()!==m){cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFEFEFEF'}};continue}
+      const k=ymd(d),hol=HOL[k],its=sortItems(map[k]||[]),red=c===0||hol,blue=c===6;
+      const rt=[{text:String(d.getDate()),font:{bold:true,size:13,color:{argb:red?'FFC0392B':blue?'FF2A5FB0':'FF000000'}}}];
+      if(hol)rt.push({text:' '+hol,font:{size:9,color:{argb:'FFC0392B'}}});
+      its.forEach(i=>rt.push({text:'\n'+xlLabel(i,!wk),font:{size:11,bold:true,strike:!!i.done,color:{argb:i.done?'FF7A8591':tc(i.type)}}}));
+      cell.value={richText:rt};
+      if(red)cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFFBE4E4'}};else if(blue)cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFE0E9F8'}};
+      lines=Math.max(lines,its.length+1);
+    }
+    row.height=Math.min(180,Math.max(78,lines*16+10));
+  }
+  ws.pageSetup.printArea='A1:G'+(2+rows);
+  return wb;
+}
+async function printXlsx(){
+  if(!window.ExcelJS){toast('Excelの部品を読み込めませんでした');return}
+  const dl=typeof getDl==='function'?await getDl():await (window.claude&&window.claude.use?window.claude.use('downloads'):null);
+  if(!dl){toast('この画面ではファイルを保存できません');return}
+  const wk=view==='wk'?wById(wid):null;
+  const name='印刷用カレンダー_'+cur[0]+'年'+(cur[1]+1)+'月_'+xlName(coById(cid).name)+'_'+(wk?xlName(wk.name):'全員')+'.xlsx';
+  try{
+    const buf=await buildPrintXlsx().xlsx.writeBuffer();
+    await dl.save({filename:name,data:new Blob([buf],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'})});
+    toast('印刷用のExcelを保存しました');
+  }catch(e){
+    if(e&&e.code==='declined'){toast('保存をやめました');return}
+    console.error(e);toast('Excelを保存できませんでした');
+  }
 }
 async function exportXlsx(scopeSel){
   if(!window.ExcelJS){toast('Excelの部品を読み込めませんでした');return}
