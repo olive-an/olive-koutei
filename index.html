@@ -579,6 +579,9 @@ function sheetHTML(){
       (x.unk.length?'<div><label>読み取れなかったセル（'+x.unk.length+'）</label><ul class="list">'+x.unk.slice(0,12).map(c=>'<li class="row"><span class="rt"><b>'+esc(c.sh)+'の '+esc(c.cell)+'</b><small>'+esc(c.tx)+'</small></span></li>').join('')+'</ul></div>':'')+
       '<p class="hint">この内容と同じ表に「Excelに反映」で書き戻せます。</p><div class="acts"><button class="btn primary" data-act="close">閉じる</button></div></div>';
   }
+  if(sheet.kind==='pw'){
+    return '<div class="bg"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="合言葉"><div class="grab"></div><h2>合言葉を入れてください</h2><p class="hint">'+esc(syMsg||'この端末で、最初の1回だけ入れます。')+'</p><div><label for="sy-pass">合言葉</label><input type="password" id="sy-pass" autocomplete="off" autocapitalize="off" spellcheck="false"></div><div class="acts"><button class="btn primary" data-act="sypw">つなぐ</button></div></div>';
+  }
   if(sheet.kind==='sy'){
     return '<div class="bg" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="共有の設定"><div class="grab"></div><h2>みんなで同じデータを使う</h2><p class="hint">'+esc(syStatus())+'</p><div><label for="sy-url">共有URL（GASのウェブアプリのURL）</label><input type="text" id="sy-url" value="'+esc(syUrl)+'" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off" autocapitalize="off" spellcheck="false"></div><div class="acts"><button class="btn primary" data-act="syok">同期する</button>'+(syUrl?'<button class="btn" data-act="sylink">共有リンクをコピー</button><button class="btn danger" data-act="syoff">共有をやめる</button>':'')+'<button class="btn" data-act="close">閉じる</button></div><p class="hint">共有リンクを、ほかの人に送ると、開くだけで同じ設定になります。このURLを知っている人は、データを見たり変えたりできます。</p></div>';
   }
@@ -1189,13 +1192,13 @@ document.addEventListener('change',e=>{
   f.text().then(t=>{try{const o=JSON.parse(t);if(!o||!Array.isArray(o.items))throw 0;pendingBk=o;sheet={kind:'bk',res:{companies:(o.companies||[]).length,workers:(o.workers||[]).length,items:o.items.length},rebuild:true};renderAll()}catch(_){toast('このファイルは読み込めません')}});
 });
 /* ---------- 共有（Googleスプレッドシート + GAS） ---------- */
-const SYK='koutei-sync-url',SYB='koutei-sync-base',SYR='koutei-sync-rev',SYI='koutei-sync-init';
+const SYK='koutei-sync-url',SYB='koutei-sync-base',SYR='koutei-sync-rev',SYI='koutei-sync-init',SYP='koutei-sync-pass';
 const SY_DEFAULT='';
-let syUrl='',syBase={},syRev=0,syInit=false,syBusy=false,syTimer=0,syAgain=false,syMsg='',syOk=false;
-function syLoad(){try{syUrl=localStorage.getItem(SYK)||'';syBase=JSON.parse(localStorage.getItem(SYB)||'{}');syRev=+localStorage.getItem(SYR)||0;syInit=localStorage.getItem(SYI)==='1'}catch(e){}
+let syPass='',syUrl='',syBase={},syRev=0,syInit=false,syBusy=false,syTimer=0,syAgain=false,syMsg='',syOk=false;
+function syLoad(){try{syUrl=localStorage.getItem(SYK)||'';syBase=JSON.parse(localStorage.getItem(SYB)||'{}');syRev=+localStorage.getItem(SYR)||0;syInit=localStorage.getItem(SYI)==='1';syPass=localStorage.getItem(SYP)||''}catch(e){}
   if(!syUrl&&SY_DEFAULT){syUrl=SY_DEFAULT;syBase={};syRev=0;syInit=false}
 }
-function sySaveMeta(){try{localStorage.setItem(SYK,syUrl);localStorage.setItem(SYB,JSON.stringify(syBase));localStorage.setItem(SYR,String(syRev));localStorage.setItem(SYI,syInit?'1':'0')}catch(e){}}
+function sySaveMeta(){try{localStorage.setItem(SYK,syUrl);localStorage.setItem(SYB,JSON.stringify(syBase));localStorage.setItem(SYR,String(syRev));localStorage.setItem(SYI,syInit?'1':'0');localStorage.setItem(SYP,syPass)}catch(e){}}
 const syH=s=>{let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return h+':'+s.length};
 function syRecs(){
   const m={};
@@ -1211,7 +1214,7 @@ function syStatus(){
 }
 function syLabel(){setStore(!syUrl?'この端末に保存':syBusy?'同期中…':syOk?'共有中':'同期できません（この端末には保存済み）')}
 async function syPost(o){
-  const res=await fetch(syUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(o),redirect:'follow'});
+  const res=await fetch(syUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({pass:syPass},o)),redirect:'follow'});
   if(!res.ok)throw new Error('http '+res.status);
   const j=await res.json();
   if(!j||!j.ok)throw new Error((j&&j.error)||'ng');
@@ -1265,7 +1268,9 @@ async function syncNow(){
       if(first)again=true;
     }while(again&&guard<3);
     syOk=true;syMsg='共有できています（'+new Date().toLocaleTimeString('ja-JP',{hour:'2-digit',minute:'2-digit'})+'に同期）';
-  }catch(e){syOk=false;syMsg='同期できませんでした。電波とURLを確かめてください。このまま使っても、この端末には保存されます。'}
+  }catch(e){syOk=false;
+    if(e&&e.message==='auth'){syMsg='合言葉が違うか、まだ入っていません。';if(!sheet||sheet.kind!=='pw'){sheet={kind:'pw',rebuild:true};renderAll()}}
+    else syMsg='同期できませんでした。電波とURLを確かめてください。このまま使っても、この端末には保存されます。'}
   syBusy=false;syLabel();
   if(sheet&&sheet.kind==='sy'){sheet.rebuild=true;renderAll()}
   if(syAgain){syAgain=false;syncSoon()}
@@ -1293,6 +1298,10 @@ document.addEventListener('click',async e=>{
     if(!/^https:\/\/script\.google\.com\/.+/.test(u)){toast('GASのURLを入れてください');return}
     if(u!==syUrl){syUrl=u;syBase={};syRev=0;syInit=false;sySaveMeta()}
     syMsg='同期しています…';await syncNow();
+  }
+  if(a==='sypw'){
+    const v=(document.getElementById('sy-pass').value||'').trim();if(!v){toast('合言葉を入れてください');return}
+    syPass=v;sySaveMeta();sheet=null;renderAll();await syncNow();if(!syOk&&syMsg.indexOf('合言葉')<0)toast('同期できませんでした');else if(syOk)toast('共有につながりました');
   }
   if(a==='syref'){
     if(!syUrl){location.reload();return}

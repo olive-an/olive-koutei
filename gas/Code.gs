@@ -1,6 +1,8 @@
 // 工程カレンダー 共有用（Googleスプレッドシートに貼り付けて使います）
 // 予定・企業・従業員を、1件ずつ「data」シートに保存します。
 var SHEET_NAME = 'data';
+// 合言葉：ここに、自分で決めた合言葉を、半角で入れます。空のままだと、合言葉なしになります。
+var PASS = '';
 
 function sheet_() {
   var ss = SpreadsheetApp.getActiveSpreadsheet();
@@ -26,6 +28,7 @@ function doPost(e) {
   lock.waitLock(25000);
   try {
     var req = JSON.parse(e.postData.contents);
+    if (PASS && String(req.pass || '') !== PASS) return out_({ ok: false, error: 'auth' });
     var s = sheet_();
     var last = s.getLastRow();
     var rows = last > 1 ? s.getRange(2, 1, last - 1, 5).getValues() : [];
