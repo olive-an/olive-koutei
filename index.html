@@ -156,7 +156,7 @@ ul.list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;ga
 .qadd{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:12px;display:flex;flex-direction:column;gap:10px}
 .qline{display:flex;gap:8px}
 .qline input{flex:1;min-width:0}
-input[type=text],input[type=date],select{min-height:52px;width:100%;border-radius:12px;border:2px solid var(--line);background:var(--bg);padding:0 12px;font-size:16px}
+input[type=text],input[type=date],input[type=month],select{min-height:52px;width:100%;border-radius:12px;border:2px solid var(--line);background:var(--bg);padding:0 12px;font-size:16px}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
 .chip{min-height:44px;padding:0 14px;border-radius:99px;border:2px solid var(--line);background:var(--surface);font:700 14px/1 var(--head)}
 .chip[aria-pressed=true]{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
@@ -580,6 +580,20 @@ function sheetHTML(){
       (x.unk.length?'<div><label>読み取れなかったセル（'+x.unk.length+'）</label><ul class="list">'+x.unk.slice(0,12).map(c=>'<li class="row"><span class="rt"><b>'+esc(c.sh)+'の '+esc(c.cell)+'</b><small>'+esc(c.tx)+'</small></span></li>').join('')+'</ul></div>':'')+
       '<p class="hint">この内容と同じ表に「Excelに反映」で書き戻せます。</p><div class="acts"><button class="btn primary" data-act="close">閉じる</button></div></div>';
   }
+  if(sheet.kind==='xs'){
+    return '<div class="bg" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="Excelに反映"><div class="grab"></div><h2>Excelに反映</h2><div><label for="xl-ym">反映する年月</label><input type="month" id="xl-ym" value="'+esc(sheet.ym||'')+'"></div><p class="hint">次に、元のExcelを選びます。書き込む前に、内容を確認できます。元のExcelは変えず、新しいファイルとして保存します。その月のシートが無いときは、前の月のシートをもとに、追加します。</p><div class="acts"><button class="btn primary" data-act="xlpick">Excelを選ぶ</button><button class="btn" data-act="close">やめる</button></div></div>';
+  }
+  if(sheet.kind==='xp'){
+    const x=sheet.res,ymj=sheet.ym.slice(0,4)+'年'+(+sheet.ym.slice(5))+'月';
+    const li=(a,f)=>a.slice(0,12).map(c=>'<li class="row"><span class="rt">'+f(c)+'</span></li>').join('');
+    return '<div class="bg" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="保存の確認"><div class="grab"></div><h2>この内容で保存しますか</h2>'+
+      '<p>対象: <b>'+esc(ymj)+'</b></p><p>書き込むセル: <b>'+x.written+'</b> ／ すでに同じ内容: <b>'+x.same+'</b> ／ 色を付けるセル: <b>'+x.paint+'</b>'+(x.cleared?' ／ 消すセル: <b>'+x.cleared+'</b>':'')+'</p>'+
+      (x.newSheet?'<p class="hint">この月のシートが無いので、「'+esc(x.newSheet)+'」を追加します（もとにしたシート: '+esc(x.newFrom)+'）。</p>':'')+
+      (x.conf.length?'<div><label>別の内容が入っていて、書かないセル（'+x.conf.length+'）</label><ul class="list">'+li(x.conf,c=>'<b>'+esc(c.sh)+'の '+esc(c.cell)+'</b><small>Excel: '+esc(c.ex)+' ／ アプリ: '+esc(c.app)+'</small>')+'</ul>'+(x.conf.length>12?'<p class="hint">ほか'+(x.conf.length-12)+'件</p>':'')+'</div>':'')+
+      (x.err.length?'<div><label>日付やRot番号が合わず、書けない予定（'+x.err.length+'）</label><ul class="list">'+li(x.err,c=>'<b>'+esc(md(c.date))+' '+esc(c.app)+'</b><small>'+esc(c.why)+'</small>')+'</ul>'+(x.err.length>12?'<p class="hint">ほか'+(x.err.length-12)+'件</p>':'')+'</div>':'')+
+      '<p class="hint">保存名: '+esc(sheet.name)+'。保存するまで、ファイルは作られません。</p>'+
+      '<div class="acts"><button class="btn primary" data-act="xsave">保存する</button><button class="btn" data-act="close">やめる</button></div></div>';
+  }
   if(sheet.kind==='ad'){
     const x=sheet.plan,TL=t=>(T[t]&&T[t].s)||t;
     const li=a=>a.slice(0,8).map(c=>'<li class="row"><span class="rt"><b>'+esc(c.who)+' '+esc(c.date.slice(5))+' '+esc(TL(c.type))+'</b><small>'+(c.file!==undefined?'ファイル: '+esc(c.file)+' ／ アプリ: '+esc(c.app):esc(c.num||''))+'</small></span></li>').join('');
@@ -641,7 +655,7 @@ function renderHome(){
     return '<li><button class="co" data-act="enter" data-cid="'+c.id+'" style="--c:'+coCol(c.id)+'"><span class="av" aria-hidden="true">'+esc(Array.from(c.name)[0]||'?')+'</span><span class="rt"><b>'+esc(c.name)+'</b><small>従業員'+S.workers.filter(w=>w.cid===c.id).length+'名<br>今日あと'+td+'件 ・ 未完了'+op+'件</small></span><span class="arrow" aria-hidden="true">›</span></button></li>'}).join('')+'</ul>'+
     '<section class="panel" aria-label="みんなのカレンダー"><p class="eyebrow" style="font-size:13px">みんなのカレンダー（全企業まとめ・日付を押すと内訳）</p>'+vCal()+'</section>'+
     '<form class="card" id="cform"><div class="ah"><b>企業を追加</b></div><div class="qline"><input type="text" id="c-name" placeholder="企業名を入力（例: ○○株式会社）" autocomplete="off" aria-label="企業名"><button class="btn primary" type="submit">追加</button></div><p class="err" id="c-err" hidden></p></form>'+'<button class="btn xlb" data-act="xlsx" data-scope="all"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>全企業をExcel出力</button>';
-  h.insertAdjacentHTML('beforeend','<details class="adm"><summary>管理用（ふだんは使いません）　版 v4</summary><div class="sumg"><button class="btn" data-act="bkout">データを書き出す（バックアップ）</button><button class="btn" data-act="bkin">データを読み込む</button></div><div class="sumg"><button class="btn" data-act="adin">予定を追加で取り込む（上書きしない）</button><button class="btn" data-act="sy">共有の設定</button></div><input type="file" id="ad-file" accept=".json,application/json" hidden></details><input type="file" id="bk-file" accept=".json,application/json" hidden>');
+  h.insertAdjacentHTML('beforeend','<details class="adm"><summary>管理用（ふだんは使いません）　版 v5</summary><div class="sumg"><button class="btn" data-act="bkout">データを書き出す（バックアップ）</button><button class="btn" data-act="bkin">データを読み込む</button></div><div class="sumg"><button class="btn" data-act="adin">予定を追加で取り込む（上書きしない）</button><button class="btn" data-act="sy">共有の設定</button></div><input type="file" id="ad-file" accept=".json,application/json" hidden></details><input type="file" id="bk-file" accept=".json,application/json" hidden>');
   document.getElementById('c-name').value=keep;
 }
 function renderAll(){
@@ -715,7 +729,7 @@ document.addEventListener('click',e=>{
   if(a==='mat'){sheet={kind:'mat',rebuild:true};renderAll();return}
   if(a==='xlsx')return exportXlsx(el.dataset.scope);
   if(a==='xlimp'){document.getElementById('xl-imp').click();return}
-  if(a==='xlfill'){document.getElementById('xl-file').click();return}
+  if(a==='xlfill'){sheet={kind:'xs',ym:cur[0]+'-'+pad(cur[1]+1),rebuild:true};renderAll();return}
   if(a==='back'){view=view==='wk'?'co':'home';sheet=null;timer=null;renderAll();window.scrollTo(0,0);return}
   if(a==='wkedit'){sheet={kind:'wk',rebuild:true};renderAll();return}
   if(a==='wkdel'){
@@ -967,9 +981,112 @@ function planCells(items){
   });
   return Object.values(out);
 }
+/* ---------- 足りない月のシートを、前の月のシートから作る ---------- */
+let xlYm='',pendingXl=null;
+async function xlAddMonth(zip,P,X,wbx,rels,relMap,Y,M,plan){
+  const ser=d=>{const x=X.serializeToString(d);return /^<\?xml/.test(x)?x:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+x};
+  const readDoc=async n=>P.parseFromString(await zip.file(n).async('string'),'application/xml');
+  const shs=Array.from(wbx.getElementsByTagName('sheet'));
+  let tpl=null;
+  for(const sh of shs){
+    let tg=relMap[sh.getAttributeNS(NSR,'id')||sh.getAttribute('r:id')];if(!tg)continue;
+    tg=tg.replace(/^\//,'');const path=tg.startsWith('xl/')?tg:'xl/'+tg;if(!zip.file(path))continue;
+    const d=await readDoc(path);
+    const num=ref=>{const c=Array.from(d.getElementsByTagName('c')).find(x=>x.getAttribute('r')===ref);const v=c&&c.getElementsByTagName('v')[0];return v?parseInt(v.textContent,10):NaN};
+    const y=num('C1'),m=num('E1');if(!y||!m)continue;
+    if(y===Y&&m===M)return null;
+    const k=y*12+m;
+    const T0=Y*12+M,better=!tpl||(k<T0?(tpl.k>=T0||k>tpl.k):(tpl.k>=T0&&k<tpl.k));
+    if(better)tpl={path,name:sh.getAttribute('name'),k};
+  }
+  if(!tpl)throw new Error('テンプレートになる月のシートがありません');
+  const doc=await readDoc(tpl.path),root=doc.documentElement;
+  root.removeAttribute('xr:uid');
+  Array.from(doc.getElementsByTagName('sheetView')).forEach(v=>v.removeAttribute('tabSelected'));
+  // 書式（グレー=土日祝／なし）の番号を、styles.xml から探す
+  const sdoc=await readDoc('xl/styles.xml'),xfs=sdoc.getElementsByTagName('cellXfs')[0];
+  let grayFill=-1;Array.from(sdoc.getElementsByTagName('fills')[0].children).forEach((f,i)=>{const fg=f.getElementsByTagName('fgColor')[0];if(grayFill<0&&fg&&fg.getAttribute('theme')==='0'&&/^-0\.2499/.test(fg.getAttribute('tint')||''))grayFill=i});
+  const findXf=(nf,fill)=>{const i=Array.from(xfs.children).findIndex(x=>x.getAttribute('numFmtId')===String(nf)&&x.getAttribute('fillId')===String(fill)&&(x.getAttribute('borderId')||'0')==='0'&&!(x.getElementsByTagName('alignment')[0]&&x.getElementsByTagName('alignment')[0].getAttribute('horizontal')));if(i<0)throw new Error('書式が見つかりません');return i};
+  if(grayFill<0)throw new Error('グレーの書式が見つかりません');
+  const S176=findXf(176,0),S176G=findXf(176,grayFill),S177=findXf(177,0),S177G=findXf(177,grayFill),SCOLG=findXf(0,grayFill);
+  const nd=new Date(Y,M,0).getDate();
+  const isOff=d=>{const w=new Date(Y,M-1,d).getDay();return w===0||w===6||!!HOL[Y+'-'+pad(M)+'-'+pad(d)]};
+  const sd=doc.getElementsByTagName('sheetData')[0];
+  const rowMap={};Array.from(sd.getElementsByTagName('row')).forEach(rw=>rowMap[+rw.getAttribute('r')]=rw);
+  const ensureRow=rn=>{
+    if(rowMap[rn])return rowMap[rn];
+    const rw=doc.createElementNS(NS,'row');rw.setAttribute('r',rn);
+    const after=Object.keys(rowMap).map(Number).filter(k=>k>rn).sort((a,b)=>a-b)[0];
+    sd.insertBefore(rw,after?rowMap[after]:null);rowMap[rn]=rw;return rw;
+  };
+  const setNum=(c,n)=>{c.removeAttribute('t');while(c.firstChild)c.removeChild(c.firstChild);const v=doc.createElementNS(NS,'v');v.textContent=String(n);c.appendChild(v)};
+  Object.values(rowMap).forEach(rw=>{
+    const rn=+rw.getAttribute('r');rw.removeAttribute('spans');
+    Array.from(rw.children).forEach(c=>{
+      const cn=colNum(c.getAttribute('r').replace(/\d+/g,''));
+      if(rn===1){if(cn===3)setNum(c,Y);else if(cn===5)setNum(c,M);return}
+      if(cn>=3)rw.removeChild(c);
+    });
+  });
+  const mk=(rn,cn,o)=>{
+    const rw=ensureRow(rn),c=doc.createElementNS(NS,'c');c.setAttribute('r',colName(cn)+rn);c.setAttribute('s',o.s);
+    if(o.f){const f=doc.createElementNS(NS,'f'),v=doc.createElementNS(NS,'v');f.textContent=o.f;v.textContent=String(o.v);c.appendChild(f);c.appendChild(v)}
+    rw.appendChild(c);
+  };
+  for(let d=1;d<=nd;d++){
+    const cn=2+d,off=isOff(d),ref=colName(cn),serial=Math.round(Date.UTC(Y,M-1,d)/86400000)+25569;
+    mk(2,cn,{s:off?S176G:S176,f:d===1?'DATE($C$1,$E$1,1)':colName(cn-1)+'2+1',v:serial});
+    mk(3,cn,{s:off?S177G:S177,f:ref+'2',v:serial});
+    for(let rn=4;rn<=7;rn++)mk(rn,cn,{s:off?S177G:S177});
+  }
+  // 列（幅は元のまま、土日祝の列だけグレー）
+  const colsEl=doc.getElementsByTagName('cols')[0];
+  const olds=Array.from(colsEl.children);
+  const w3=(olds.find(c=>+c.getAttribute('min')<=3&&+c.getAttribute('max')>=3)||doc.createElementNS(NS,'col')).getAttribute('width')||'3.69921875';
+  olds.forEach(c=>{if(+c.getAttribute('max')>=3)colsEl.removeChild(c)});
+  for(let cn=3;cn<=2+nd;cn++){const c=doc.createElementNS(NS,'col');c.setAttribute('min',cn);c.setAttribute('max',cn);c.setAttribute('width',w3);if(isOff(cn-2))c.setAttribute('style',SCOLG);c.setAttribute('customWidth','1');colsEl.appendChild(c)}
+  // Rot番号の行（足りない番号は、下に足す。いまある行は変えない）
+  const rotRows=[];Object.keys(rowMap).map(Number).filter(n=>n>=7).sort((a,b)=>a-b).forEach(rn=>{const b=Array.from(rowMap[rn].children).find(c=>c.getAttribute('r')==='B'+rn);const v=b&&b.getElementsByTagName('v')[0];if(v&&!isNaN(parseInt(v.textContent,10)))rotRows.push([rn,parseInt(v.textContent,10),b.getAttribute('s')])});
+  const ym=Y+'-'+pad(M);
+  let maxNeed=0;plan.filter(c=>c.kind==='rot'&&c.date.startsWith(ym)).forEach(c=>{if(c.rot>maxNeed)maxNeed=c.rot});
+  if(rotRows.length&&maxNeed>rotRows[rotRows.length-1][1]){
+    let [lr,ln,ls]=rotRows[rotRows.length-1];
+    for(let n=ln+1;n<=maxNeed;n++){lr++;const rw=ensureRow(lr),c=doc.createElementNS(NS,'c');c.setAttribute('r','B'+lr);if(ls)c.setAttribute('s',ls);const v=doc.createElementNS(NS,'v');v.textContent=String(n);c.appendChild(v);rw.insertBefore(c,rw.firstChild)}
+  }
+  const lastRow=Math.max(...Object.keys(rowMap).map(Number));
+  const dim=doc.getElementsByTagName('dimension')[0];if(dim)dim.setAttribute('ref','A1:'+colName(2+nd)+lastRow);
+  // ファイルへの登録
+  const nums=Object.keys(zip.files).map(n=>/^xl\/worksheets\/sheet(\d+)\.xml$/.exec(n)).filter(Boolean).map(m=>+m[1]);
+  const sn=Math.max(0,...nums)+1,newPath='xl/worksheets/sheet'+sn+'.xml';
+  zip.file(newPath,ser(doc));
+  const rIds=Array.from(rels.getElementsByTagName('Relationship')).map(e=>+(/\d+/.exec(e.getAttribute('Id'))||[0])[0]);
+  const rid='rId'+(Math.max(0,...rIds)+1);
+  const rel=rels.createElementNS(rels.documentElement.namespaceURI,'Relationship');
+  rel.setAttribute('Id',rid);rel.setAttribute('Type','http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet');rel.setAttribute('Target','worksheets/sheet'+sn+'.xml');
+  rels.documentElement.appendChild(rel);
+  Array.from(rels.getElementsByTagName('Relationship')).filter(e=>/calcChain\.xml$/.test(e.getAttribute('Target'))).forEach(e=>e.parentNode.removeChild(e));
+  const names=shs.map(s=>s.getAttribute('name'));
+  let name=/月$/.test(tpl.name)?M+'月':String(M);while(names.includes(name))name+='_';
+  const ids=shs.map(s=>+s.getAttribute('sheetId')||0);
+  const ne=wbx.createElementNS(NS,'sheet');ne.setAttribute('name',name);ne.setAttribute('sheetId',String(Math.max(0,...ids)+1));ne.setAttributeNS(NSR,'r:id',rid);
+  wbx.getElementsByTagName('sheets')[0].appendChild(ne);
+  const cp=wbx.getElementsByTagName('calcPr')[0];if(cp)cp.setAttribute('fullCalcOnLoad','1');
+  zip.file('xl/workbook.xml',ser(wbx));zip.file('xl/_rels/workbook.xml.rels',ser(rels));
+  zip.remove('xl/calcChain.xml');
+  let ct=await zip.file('[Content_Types].xml').async('string');
+  ct=ct.replace(/<Override PartName="\/xl\/calcChain\.xml"[^>]*\/>/,'').replace('</Types>','<Override PartName="/'+newPath+'" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>');
+  zip.file('[Content_Types].xml',ct);
+  if(zip.file('docProps/app.xml')){
+    let ap=await zip.file('docProps/app.xml').async('string');
+    ap=ap.replace(/<vt:i4>(\d+)<\/vt:i4>/,(m,a)=>'<vt:i4>'+(+a+1)+'</vt:i4>').replace(/<vt:vector size="(\d+)" baseType="lpstr">/,(m,a)=>'<vt:vector size="'+(+a+1)+'" baseType="lpstr">').replace('</vt:vector></TitlesOfParts>','<vt:lpstr>'+name.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</vt:lpstr></vt:vector></TitlesOfParts>');
+    zip.file('docProps/app.xml',ap);
+  }
+  return {name,from:tpl.name};
+}
 async function fillExcel(file){
   if(!window.JSZip){toast('Excelの部品を読み込めませんでした');return}
   const dl=await getDl();
+  if(!/^\d{4}-\d{2}$/.test(xlYm)){toast('年月を選んでください');return}
   toast('Excelを読み込んでいます…');
   try{
     const zip=await JSZip.loadAsync(await file.arrayBuffer());
@@ -980,8 +1097,8 @@ async function fillExcel(file){
     const sst=[];
     if(zip.file('xl/sharedStrings.xml')){const sx=await parse('xl/sharedStrings.xml');Array.from(sx.getElementsByTagName('si')).forEach(si=>sst.push(Array.from(si.children).map(ch=>ch.tagName==='t'?ch.textContent:ch.tagName==='r'?Array.from(ch.children).filter(x=>x.tagName==='t').map(x=>x.textContent).join(''):'').join('')))}
     const OPT={items:document.getElementById('xo-items').checked,peel:document.getElementById('xo-peel').checked,plant:document.getElementById('xo-plant').checked,harv:document.getElementById('xo-harv').checked};
-    const plan=OPT.items?planCells(sheetItemsForFill()):[];
-    const res={written:0,same:0,conf:[],miss:[],missN:0,paint:0};
+    const plan=OPT.items?planCells(sheetItemsForFill()).filter(c=>c.date.startsWith(xlYm)):[];
+    const res={written:0,same:0,conf:[],miss:[],missN:0,paint:0,err:[],newSheet:null};
     let sdoc=null,fillsEl=null,xfsEl=null,stChanged=false;
     if(OPT.peel||OPT.plant||OPT.harv){sdoc=await parse('xl/styles.xml');fillsEl=sdoc.getElementsByTagName('fills')[0];xfsEl=sdoc.getElementsByTagName('cellXfs')[0]}
     const fillCache={},xfCache={};
@@ -1003,6 +1120,7 @@ async function fillExcel(file){
       return fg.getAttribute('rgb')==='FFFFFFFF'||fg.getAttribute('theme')==='0';
     };
     const done=new Set();
+    if(OPT.items){const ad=await xlAddMonth(zip,P,X,wbx,rels,relMap,+xlYm.slice(0,4),+xlYm.slice(5),plan);if(ad){res.newSheet=ad.name;res.newFrom=ad.from;Array.from(rels.getElementsByTagName('Relationship')).forEach(e=>relMap[e.getAttribute('Id')]=e.getAttribute('Target'))}}
     for(const sh of Array.from(wbx.getElementsByTagName('sheet'))){
       const nm=sh.getAttribute('name');let tg=relMap[sh.getAttributeNS(NSR,'id')||sh.getAttribute('r:id')];if(!tg)continue;
       tg=tg.replace(/^\//,'');const path=tg.startsWith('xl/')?tg:'xl/'+tg;
@@ -1020,6 +1138,9 @@ async function fillExcel(file){
       const get=(rn,cn)=>{const c=cellOf(rn,cn,false);return c?cellText(c,sst):''};
       const Y=parseInt(get(1,3),10),M=parseInt(get(1,5),10);if(!Y||!M)continue;
       const nd=new Date(Y,M,0).getDate(),ym=Y+'-'+pad(M);
+      if(ym!==xlYm)continue;
+      const dateCol={};for(let cn=3;cn<=3+nd+2;cn++){const ce=cellOf(2,cn,false);if(!ce)continue;const vv=ce.getElementsByTagName('v')[0],n=vv?parseFloat(vv.textContent):NaN;if(!isNaN(n)){const dt=new Date(Math.round((n-25569)*86400000));dateCol[dt.getUTCFullYear()+'-'+pad(dt.getUTCMonth()+1)+'-'+pad(dt.getUTCDate())]=cn}}
+      const colOf=ds=>dateCol[ds]||(Object.keys(dateCol).length?null:2+ +ds.slice(8));
       const rotRow={};Object.keys(rows).map(Number).filter(n=>n>=7).forEach(n=>{const v=parseInt(get(n,2),10);if(!isNaN(v)&&rotRow[v]==null)rotRow[v]=n});
       let changed=false;
       const nrm=x=>String(x).replace(/[（(].*?[)）]/g,'').replace(/[\s\u3000]/g,'').replace(/^植え$/,'植').replace(/^皮むき$/,'皮').replace(/^茶$/,'皮茶').replace(/^締$/,'〆');
@@ -1028,7 +1149,7 @@ async function fillExcel(file){
       const shown=ex=>ex==='\u0000f'?'（数式）':ex;
       // アプリで動かした・消した元の予定を、Excelからも消す
       (S.xlGone||[]).filter(g=>g.cid===cid&&g.date.startsWith(ym)).forEach(g=>{
-        const d=+g.date.slice(8),cn=2+d;if(d>nd)return;
+        const cn=colOf(g.date);if(!cn)return;
         const cells=[];
         if(g.xr&&g.xt)cells.push([g.xr,g.xt]);
         else rotNums(g.num).forEach(n=>{if(rotRow[n]!=null&&ROTL[g.type])cells.push([rotRow[n],ROTL[g.type]])});
@@ -1039,7 +1160,7 @@ async function fillExcel(file){
         res.goneDone=(res.goneDone||[]);res.goneDone.push(g);
       });
       plan.filter(c=>c.date.startsWith(ym)).forEach(c=>{
-        const d=+c.date.slice(8),cn=2+d;if(d>nd||get(2,cn)==='')return;
+        const cn=colOf(c.date);if(!cn||get(2,cn)==='')return;
         done.add(c);
         if(c.kind==='prod'){
           c.texts.forEach(t=>{
@@ -1055,7 +1176,7 @@ async function fillExcel(file){
           });
           return;
         }
-        const rn=c.kind==='top'?4:/^fix/.test(c.kind)?+c.kind.slice(3):rotRow[c.rot];if(!rn)return;
+        const rn=c.kind==='top'?4:/^fix/.test(c.kind)?+c.kind.slice(3):rotRow[c.rot];if(!rn){res.err.push({date:c.date,why:'Rot'+c.rot+'の行が、Excelにありません',app:c.texts.join('・')});return}
         const ex=get(rn,cn);
         if(ex===''){write(rn,cn,c.texts.join('・'));return}
         if(c.texts.every(t=>same(ex,t,c.kind!=='rot'))){res.same++;return}
@@ -1080,22 +1201,38 @@ async function fillExcel(file){
       }
       if(changed){let xml=X.serializeToString(doc);if(!/^<\?xml/.test(xml))xml='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+xml;zip.file(path,xml)}
     }
-    if(res.goneDone&&res.goneDone.length){S.xlGone=S.xlGone.filter(g=>!res.goneDone.includes(g));save()}
     if(stChanged){let sx=X.serializeToString(sdoc);if(!/^<\?xml/.test(sx))sx='<?xml version="1.0" encoding="UTF-8" standalone="yes"?>\n'+sx;zip.file('xl/styles.xml',sx)}
+    plan.filter(c=>!done.has(c)&&!res.err.some(e=>e.date===c.date&&e.app===c.texts.join('・'))).forEach(c=>res.err.push({date:c.date,why:'この日付の列が、Excelにありません',app:c.texts.join('・')}));
     const miss={};plan.filter(c=>!done.has(c)).forEach(c=>{const k=c.date.slice(0,4)+'年'+(+c.date.slice(5,7))+'月';miss[k]=(miss[k]||0)+1});
     res.miss=Object.keys(miss).sort();res.missN=Object.values(miss).reduce((a,b)=>a+b,0);
     const blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',compression:'DEFLATE'});
-    const d=new Date(),stamp=d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate());
-    const base=xlName(file.name.replace(/\.xlsx$/i,''))||'作業計画表';
-    sheet={kind:'xr',res,rebuild:true};renderAll();
-    await dl.save({filename:base+'_アプリ反映_'+stamp+'.xlsx',data:blob});
-    toast('Excelを保存しました');
+    const who=view==='wk'&&wById(wid)?'_'+xlName(wById(wid).name):view==='co'&&coById(cid)?'_'+xlName(coById(cid).name):'';
+    const fname='工程管理表_'+xlYm.slice(0,4)+'年'+(+xlYm.slice(5))+'月'+who+'.xlsx';
+    pendingXl={blob,name:fname,gone:res.goneDone||[]};
+    sheet={kind:'xp',res,ym:xlYm,name:fname,rebuild:true};renderAll();
   }catch(e){
     if(e&&e.code==='declined'){toast('保存をやめました');return}
     console.error(e);toast('このExcelには反映できませんでした');
   }
 }
 document.addEventListener('change',e=>{if(e.target.id==='xl-file'){const f=e.target.files&&e.target.files[0];e.target.value='';if(f)fillExcel(f)}});
+document.addEventListener('click',async e=>{
+  const el=e.target.closest('[data-act=xlpick],[data-act=xsave]');if(!el)return;
+  if(el.dataset.act==='xlpick'){
+    const v=(document.getElementById('xl-ym')||{}).value||'';
+    if(!/^\d{4}-\d{2}$/.test(v)){toast('年月を選んでください');return}
+    xlYm=v;document.getElementById('xl-file').click();return;
+  }
+  if(!pendingXl)return;
+  const dl=typeof getDl==='function'?await getDl():await (window.claude&&window.claude.use?window.claude.use('downloads'):null);
+  if(!dl){toast('この画面ではファイルを保存できません');return}
+  const px=pendingXl;
+  try{
+    await dl.save({filename:px.name,data:px.blob});
+    if(px.gone&&px.gone.length){S.xlGone=S.xlGone.filter(g=>!px.gone.includes(g));save()}
+    const res=sheet&&sheet.res;pendingXl=null;sheet={kind:'xr',res,rebuild:true};renderAll();toast('Excelを保存しました');
+  }catch(err){if(err&&err.code==='declined'){toast('保存をやめました');return}toast('Excelを保存できませんでした')}
+});
 /* ---------- Excelの内容をアプリに取り込む（表に合わせる） ---------- */
 const XL_ROT={'植':'plant','植え':'plant','収':'harvest','皮':'peel','皮むき':'peel','準備':'prep','出荷':'ship','世話':'care','納品':'deliver'};
 const XL_P={'傷':'kizu','加工':'process','茶':'tea','皮茶':'tea','醤油':'soy','酢':'vinegar','酢漬け':'vinegar','黒':'black','〇':'output','皮':'peel','納品':'deliver'};
