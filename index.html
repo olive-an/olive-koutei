@@ -684,7 +684,7 @@ function syncWin(){
 function openEdit(draft){
   sheet={kind:'edit',draft,rebuild:true};renderAll();{const sh=document.querySelector('#sheet .sheet');if(sh)sh.scrollTop=0}
   syncWin();
-  const f=document.getElementById('f-text');if(f&&!draft.id)f.focus();
+  const f=document.getElementById('f-text');if(f&&!draft.id&&draft.type==='task')f.focus();
 }
 function toTop(){window.scrollTo(0,0);try{document.scrollingElement.scrollTop=0}catch(e){}}
 function closeSheet(){sheet=null;renderAll()}
