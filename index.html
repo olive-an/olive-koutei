@@ -641,7 +641,7 @@ function renderHome(){
     return '<li><button class="co" data-act="enter" data-cid="'+c.id+'" style="--c:'+coCol(c.id)+'"><span class="av" aria-hidden="true">'+esc(Array.from(c.name)[0]||'?')+'</span><span class="rt"><b>'+esc(c.name)+'</b><small>従業員'+S.workers.filter(w=>w.cid===c.id).length+'名<br>今日あと'+td+'件 ・ 未完了'+op+'件</small></span><span class="arrow" aria-hidden="true">›</span></button></li>'}).join('')+'</ul>'+
     '<section class="panel" aria-label="みんなのカレンダー"><p class="eyebrow" style="font-size:13px">みんなのカレンダー（全企業まとめ・日付を押すと内訳）</p>'+vCal()+'</section>'+
     '<form class="card" id="cform"><div class="ah"><b>企業を追加</b></div><div class="qline"><input type="text" id="c-name" placeholder="企業名を入力（例: ○○株式会社）" autocomplete="off" aria-label="企業名"><button class="btn primary" type="submit">追加</button></div><p class="err" id="c-err" hidden></p></form>'+'<button class="btn xlb" data-act="xlsx" data-scope="all"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>全企業をExcel出力</button>';
-  h.insertAdjacentHTML('beforeend','<details class="adm"><summary>管理用（ふだんは使いません）</summary><div class="sumg"><button class="btn" data-act="bkout">データを書き出す（バックアップ）</button><button class="btn" data-act="bkin">データを読み込む</button></div><div class="sumg"><button class="btn" data-act="adin">予定を追加で取り込む（上書きしない）</button><button class="btn" data-act="sy">共有の設定</button></div><input type="file" id="ad-file" accept=".json,application/json" hidden></details><input type="file" id="bk-file" accept=".json,application/json" hidden>');
+  h.insertAdjacentHTML('beforeend','<details class="adm"><summary>管理用（ふだんは使いません）　版 v3</summary><div class="sumg"><button class="btn" data-act="bkout">データを書き出す（バックアップ）</button><button class="btn" data-act="bkin">データを読み込む</button></div><div class="sumg"><button class="btn" data-act="adin">予定を追加で取り込む（上書きしない）</button><button class="btn" data-act="sy">共有の設定</button></div><input type="file" id="ad-file" accept=".json,application/json" hidden></details><input type="file" id="bk-file" accept=".json,application/json" hidden>');
   document.getElementById('c-name').value=keep;
 }
 function renderAll(){
@@ -1370,5 +1370,5 @@ renderAll();window.scrollTo(0,0);syncTop();
 initDb();syncInit();
 </script>
 
-<script>if('serviceWorker' in navigator&&location.protocol!=='file:'){window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{}))}</script>
+<script>if('serviceWorker' in navigator&&location.protocol!=='file:'){const had=!!navigator.serviceWorker.controller;navigator.serviceWorker.addEventListener('controllerchange',()=>{if(had&&!window.__rl){window.__rl=1;location.reload()}});window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').then(g=>g.update()).catch(()=>{}))}</script>
 </body></html>
