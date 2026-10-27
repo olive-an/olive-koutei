@@ -224,7 +224,7 @@ details.fin summary{min-height:44px;display:flex;align-items:center;font-weight:
 #home .co .rt small{font-size:12px;line-height:1.35}
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
-<style>[data-act=mat]{display:none!important}#refbtn{display:block;margin:6px 0 0 auto;min-height:32px;padding:0 12px;font-size:12px}</style>
+<style>[data-act=mat]{display:none!important}.adm{margin:14px 0 4px;font-size:12px;color:var(--navy-mute)}.adm summary{cursor:pointer;padding:6px 2px}.adm .sumg{margin-top:8px}#refbtn{display:block;margin:6px 0 0 auto;min-height:32px;padding:0 12px;font-size:12px}</style>
 </head><body>
 
 <div class="wrap" id="app">
@@ -632,7 +632,7 @@ function renderHome(){
     return '<li><button class="co" data-act="enter" data-cid="'+c.id+'" style="--c:'+coCol(c.id)+'"><span class="av" aria-hidden="true">'+esc(Array.from(c.name)[0]||'?')+'</span><span class="rt"><b>'+esc(c.name)+'</b><small>従業員'+S.workers.filter(w=>w.cid===c.id).length+'名<br>今日あと'+td+'件 ・ 未完了'+op+'件</small></span><span class="arrow" aria-hidden="true">›</span></button></li>'}).join('')+'</ul>'+
     '<section class="panel" aria-label="みんなのカレンダー"><p class="eyebrow" style="font-size:13px">みんなのカレンダー（全企業まとめ・日付を押すと内訳）</p>'+vCal()+'</section>'+
     '<form class="card" id="cform"><div class="ah"><b>企業を追加</b></div><div class="qline"><input type="text" id="c-name" placeholder="企業名を入力（例: ○○株式会社）" autocomplete="off" aria-label="企業名"><button class="btn primary" type="submit">追加</button></div><p class="err" id="c-err" hidden></p></form>'+'<button class="btn xlb" data-act="xlsx" data-scope="all"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>全企業をExcel出力</button>';
-  h.insertAdjacentHTML('beforeend','<div class="sumg"><button class="btn" data-act="bkout">データを書き出す（バックアップ）</button><button class="btn" data-act="bkin">データを読み込む</button></div><div class="sumg"><button class="btn" data-act="sy">共有の設定（みんなで同じデータ）</button></div><input type="file" id="bk-file" accept=".json,application/json" hidden>');
+  h.insertAdjacentHTML('beforeend','<details class="adm"><summary>管理用（ふだんは使いません）</summary><div class="sumg"><button class="btn" data-act="bkout">データを書き出す（バックアップ）</button><button class="btn" data-act="bkin">データを読み込む</button></div><div class="sumg"><button class="btn" data-act="sy">共有の設定</button></div></details><input type="file" id="bk-file" accept=".json,application/json" hidden>');
   document.getElementById('c-name').value=keep;
 }
 function renderAll(){
@@ -1190,8 +1190,11 @@ document.addEventListener('change',e=>{
 });
 /* ---------- 共有（Googleスプレッドシート + GAS） ---------- */
 const SYK='koutei-sync-url',SYB='koutei-sync-base',SYR='koutei-sync-rev',SYI='koutei-sync-init';
+const SY_DEFAULT='';
 let syUrl='',syBase={},syRev=0,syInit=false,syBusy=false,syTimer=0,syAgain=false,syMsg='',syOk=false;
-function syLoad(){try{syUrl=localStorage.getItem(SYK)||'';syBase=JSON.parse(localStorage.getItem(SYB)||'{}');syRev=+localStorage.getItem(SYR)||0;syInit=localStorage.getItem(SYI)==='1'}catch(e){}}
+function syLoad(){try{syUrl=localStorage.getItem(SYK)||'';syBase=JSON.parse(localStorage.getItem(SYB)||'{}');syRev=+localStorage.getItem(SYR)||0;syInit=localStorage.getItem(SYI)==='1'}catch(e){}
+  if(!syUrl&&SY_DEFAULT){syUrl=SY_DEFAULT;syBase={};syRev=0;syInit=false}
+}
 function sySaveMeta(){try{localStorage.setItem(SYK,syUrl);localStorage.setItem(SYB,JSON.stringify(syBase));localStorage.setItem(SYR,String(syRev));localStorage.setItem(SYI,syInit?'1':'0')}catch(e){}}
 const syH=s=>{let h=5381;for(let i=0;i<s.length;i++)h=((h<<5)+h+s.charCodeAt(i))|0;return h+':'+s.length};
 function syRecs(){
