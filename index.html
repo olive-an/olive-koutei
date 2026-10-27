@@ -174,6 +174,7 @@ details.fin summary{min-height:44px;display:flex;align-items:center;font-weight:
 .sheet{position:fixed;z-index:51;left:0;right:0;bottom:0;max-width:560px;margin:auto;max-height:90%;overflow:auto;background:var(--surface);border-radius:22px 22px 0 0;padding:10px 16px calc(20px + env(safe-area-inset-bottom,0px));display:flex;flex-direction:column;gap:14px;box-shadow:var(--shadow)}
 .grab{width:44px;height:5px;border-radius:3px;background:var(--line);margin:0 auto}
 .sheet h2{font-size:22px;font-weight:900}
+#eform.sheet{max-height:94%}
 .sheet label,.sheet legend{font:700 14px/1 var(--head);color:var(--muted);display:block;margin-bottom:6px;padding:0}
 .sheet fieldset{border:0;margin:0;padding:0;min-width:0}
 .types{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px}
@@ -682,7 +683,7 @@ function syncWin(){
   h.hidden=false;lb.hidden=false;
 }
 function openEdit(draft){
-  sheet={kind:'edit',draft,rebuild:true};renderAll();{const sh=document.querySelector('#sheet .sheet');if(sh)sh.scrollTop=0}
+  sheet={kind:'edit',draft,rebuild:true};try{document.activeElement&&document.activeElement.blur()}catch(e){}renderAll();{const up=()=>{const sh=document.querySelector('#sheet .sheet');if(sh)sh.scrollTop=0;window.scrollTo(0,0)};up();requestAnimationFrame(up);setTimeout(up,80)}
   syncWin();
   const f=document.getElementById('f-text');if(f&&!draft.id&&draft.type==='task')f.focus();
 }
