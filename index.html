@@ -1193,7 +1193,7 @@ document.addEventListener('change',e=>{
 });
 /* ---------- 共有（Googleスプレッドシート + GAS） ---------- */
 const SYK='koutei-sync-url',SYB='koutei-sync-base',SYR='koutei-sync-rev',SYI='koutei-sync-init',SYP='koutei-sync-pass';
-const SY_DEFAULT='';
+const SY_DEFAULT='https://script.google.com/macros/s/AKfycbyNWbnIFl72WlGi2EVg04e8Ar0yoo1F-A4CCyO8xu_MsXE7Tm5ROPjNMEyiqH4kMCaU9g/exec';
 let syPass='',syUrl='',syBase={},syRev=0,syInit=false,syBusy=false,syTimer=0,syAgain=false,syMsg='',syOk=false;
 function syLoad(){try{syUrl=localStorage.getItem(SYK)||'';syBase=JSON.parse(localStorage.getItem(SYB)||'{}');syRev=+localStorage.getItem(SYR)||0;syInit=localStorage.getItem(SYI)==='1';syPass=localStorage.getItem(SYP)||''}catch(e){}
   if(!syUrl&&SY_DEFAULT){syUrl=SY_DEFAULT;syBase={};syRev=0;syInit=false}
