@@ -579,6 +579,11 @@ function sheetHTML(){
       (x.unk.length?'<div><label>読み取れなかったセル（'+x.unk.length+'）</label><ul class="list">'+x.unk.slice(0,12).map(c=>'<li class="row"><span class="rt"><b>'+esc(c.sh)+'の '+esc(c.cell)+'</b><small>'+esc(c.tx)+'</small></span></li>').join('')+'</ul></div>':'')+
       '<p class="hint">この内容と同じ表に「Excelに反映」で書き戻せます。</p><div class="acts"><button class="btn primary" data-act="close">閉じる</button></div></div>';
   }
+  if(sheet.kind==='ad'){
+    const x=sheet.plan,TL=t=>(T[t]&&T[t].s)||t;
+    const li=a=>a.slice(0,8).map(c=>'<li class="row"><span class="rt"><b>'+esc(c.who)+' '+esc(c.date.slice(5))+' '+esc(TL(c.type))+'</b><small>'+(c.file!==undefined?'ファイル: '+esc(c.file)+' ／ アプリ: '+esc(c.app):esc(c.num||''))+'</small></span></li>').join('');
+    return '<div class="bg" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="予定の追加"><div class="grab"></div><h2>予定を追加しますか</h2><p>追加: <b>'+x.add.length+'</b>件 ／ すでにある（そのまま）: <b>'+x.same+'</b>件'+(x.rem.length?' ／ 消す: <b>'+x.rem.length+'</b>件':'')+'</p>'+(x.rem.length?'<div><label>消す予定（ファイルの指定）</label><ul class="list">'+li(x.rem)+'</ul></div>':'')+(x.diff.length?'<div><label>番号が違う予定（アプリの内容を残します）</label><ul class="list">'+li(x.diff)+'</ul></div>':'')+'<p class="hint">今ある予定は、上書きしません。ファイルにない予定も、消しません。</p><div class="acts"><button class="btn primary" data-act="adok">追加する</button><button class="btn" data-act="close">やめる</button></div></div>';
+  }
   if(sheet.kind==='pw'){
     return '<div class="bg"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="合言葉"><div class="grab"></div><h2>合言葉を入れてください</h2><p class="hint">'+esc(syMsg||'この端末で、最初の1回だけ入れます。')+'</p><div><label for="sy-pass">合言葉</label><input type="password" id="sy-pass" autocomplete="off" autocapitalize="off" spellcheck="false"></div><div class="acts"><button class="btn primary" data-act="sypw">つなぐ</button></div></div>';
   }
@@ -635,7 +640,7 @@ function renderHome(){
     return '<li><button class="co" data-act="enter" data-cid="'+c.id+'" style="--c:'+coCol(c.id)+'"><span class="av" aria-hidden="true">'+esc(Array.from(c.name)[0]||'?')+'</span><span class="rt"><b>'+esc(c.name)+'</b><small>従業員'+S.workers.filter(w=>w.cid===c.id).length+'名<br>今日あと'+td+'件 ・ 未完了'+op+'件</small></span><span class="arrow" aria-hidden="true">›</span></button></li>'}).join('')+'</ul>'+
     '<section class="panel" aria-label="みんなのカレンダー"><p class="eyebrow" style="font-size:13px">みんなのカレンダー（全企業まとめ・日付を押すと内訳）</p>'+vCal()+'</section>'+
     '<form class="card" id="cform"><div class="ah"><b>企業を追加</b></div><div class="qline"><input type="text" id="c-name" placeholder="企業名を入力（例: ○○株式会社）" autocomplete="off" aria-label="企業名"><button class="btn primary" type="submit">追加</button></div><p class="err" id="c-err" hidden></p></form>'+'<button class="btn xlb" data-act="xlsx" data-scope="all"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>全企業をExcel出力</button>';
-  h.insertAdjacentHTML('beforeend','<details class="adm"><summary>管理用（ふだんは使いません）</summary><div class="sumg"><button class="btn" data-act="bkout">データを書き出す（バックアップ）</button><button class="btn" data-act="bkin">データを読み込む</button></div><div class="sumg"><button class="btn" data-act="sy">共有の設定</button></div></details><input type="file" id="bk-file" accept=".json,application/json" hidden>');
+  h.insertAdjacentHTML('beforeend','<details class="adm"><summary>管理用（ふだんは使いません）</summary><div class="sumg"><button class="btn" data-act="bkout">データを書き出す（バックアップ）</button><button class="btn" data-act="bkin">データを読み込む</button></div><div class="sumg"><button class="btn" data-act="adin">予定を追加で取り込む（上書きしない）</button><button class="btn" data-act="sy">共有の設定</button></div><input type="file" id="ad-file" accept=".json,application/json" hidden></details><input type="file" id="bk-file" accept=".json,application/json" hidden>');
   document.getElementById('c-name').value=keep;
 }
 function renderAll(){
@@ -1309,6 +1314,48 @@ document.addEventListener('click',async e=>{
   }
   if(a==='sylink'){try{await navigator.clipboard.writeText(syLink());toast('共有リンクをコピーしました')}catch(_){toast('コピーできませんでした')}}
   if(a==='syoff'){syUrl='';syBase={};syRev=0;syInit=false;syMsg='';syOk=false;sySaveMeta();syLabel();sheet=null;renderAll();toast('共有をやめました')}
+});
+/* ---------- 予定の追加取り込み（上書きしない） ---------- */
+let pendingAd=null;
+const adNd=s=>(String(s==null?'':s).match(/\d+/g)||[]).join(',');
+const adId=k=>{let h=5381;for(let i=0;i<k.length;i++)h=((h<<5)+h+k.charCodeAt(i))|0;return 'a'+(h>>>0).toString(36)};
+function adPlan(f){
+  const plan={add:[],same:0,diff:[],rem:[]};
+  const have=new Map();
+  S.items.forEach(i=>{const k=i.wid+'|'+i.date+'|'+i.type;if(!have.has(k))have.set(k,[]);have.get(k).push(i)});
+  const findW=(cid,name)=>S.workers.find(w=>w.cid===cid&&w.name===name);
+  (f.items||[]).forEach(r=>{
+    const w=findW(r.cid,r.wname),ex=w?have.get(w.id+'|'+r.date+'|'+r.type):null;
+    if(!ex){plan.add.push(r);return}
+    if(!r.num||ex.some(i=>adNd(i.num)===adNd(r.num)))plan.same++;
+    else plan.diff.push({who:r.wname,date:r.date,type:r.type,file:r.num,app:ex[0].num||''});
+  });
+  (f.remove||[]).forEach(r=>{const w=findW(r.cid,r.wname),ex=w?have.get(w.id+'|'+r.date+'|'+r.type):null;if(ex)ex.forEach(i=>plan.rem.push({id:i.id,who:r.wname,date:r.date,type:r.type,num:i.num||''}))});
+  return plan;
+}
+function adApply(f){
+  const plan=adPlan(f);
+  (f.companies||[]).forEach(c=>{if(!S.companies.some(x=>x.id===c.id))S.companies.push({id:c.id,name:c.name})});
+  plan.add.forEach((r,k)=>{
+    let w=S.workers.find(x=>x.cid===r.cid&&x.name===r.wname);
+    if(!w){w={id:'w'+uid(),cid:r.cid,name:r.wname};S.workers.push(w)}
+    const id=adId([r.cid,r.wname,r.date,r.type,r.num].join('|'));
+    if(S.items.some(i=>i.id===id))return;
+    S.items.push({id,cid:r.cid,wid:w.id,date:r.date,type:r.type,text:r.text||'',num:r.num||'',goal:'',qty:'',done:r.date<todayS(),o:9000+k});
+  });
+  const rm=new Set(plan.rem.map(x=>x.id));
+  if(rm.size)S.items=S.items.filter(i=>!rm.has(i.id));
+  return plan;
+}
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act]');if(!el)return;
+  if(el.dataset.act==='adin')document.getElementById('ad-file').click();
+  if(el.dataset.act==='adok'&&pendingAd){const p=adApply(pendingAd);pendingAd=null;save();sheet=null;toast('予定を'+p.add.length+'件、追加しました');renderAll()}
+});
+document.addEventListener('change',e=>{
+  if(e.target.id!=='ad-file')return;
+  const f=e.target.files&&e.target.files[0];e.target.value='';if(!f)return;
+  f.text().then(t=>{try{const o=JSON.parse(t);if(!o||o.kind!=='koutei-add'||!Array.isArray(o.items))throw 0;pendingAd=o;sheet={kind:'ad',plan:adPlan(o),rebuild:true};renderAll()}catch(_){toast('このファイルは読み込めません')}});
 });
 
 /* ---------- boot ---------- */
