@@ -226,7 +226,7 @@ details.fin summary{min-height:44px;display:flex;align-items:center;font-weight:
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
 </style>
 <style>[data-act=mat]{display:none!important}.adm{margin:14px 0 4px;font-size:12px;color:var(--navy-mute)}.adm summary{cursor:pointer;padding:6px 2px}.adm .sumg{margin-top:8px}#brandbtn{cursor:pointer;-webkit-tap-highlight-color:transparent}.hbtns{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}#refbtn,#fzbtn{min-height:34px;padding:0 12px;font-size:13px}</style>
-<style>.cell,.ev{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}#mvbar{position:fixed;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top,0px));z-index:60;background:#1d2a22;color:#fff;border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:center;font:700 14px/1.4 var(--head);box-shadow:0 6px 20px rgba(0,0,0,.3)}#mvbar span{flex:1}#mvbar button{flex:none;min-height:36px;padding:0 14px;border-radius:99px;border:0;background:#fff;color:#1d2a22;font:700 14px/1 var(--head)}.lnrow{display:flex;gap:8px;align-items:center;width:100%}.lnrow a{flex:1;font:700 15px/1.4 var(--head);color:#2a5fb0;overflow-wrap:anywhere}</style></head><body>
+<style>.cell,.ev{-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}#mvbar,#odbar{position:fixed;left:8px;right:8px;top:calc(8px + env(safe-area-inset-top,0px));z-index:60;background:#1d2a22;color:#fff;border-radius:14px;padding:10px 12px;display:flex;gap:10px;align-items:center;font:700 14px/1.4 var(--head);box-shadow:0 6px 20px rgba(0,0,0,.3)}#mvbar span,#odbar span{flex:1}#mvbar button,#odbar button{flex:none;min-height:36px;padding:0 14px;border-radius:99px;border:0;background:#fff;color:#1d2a22;font:700 14px/1 var(--head)}.lnrow{display:flex;gap:8px;align-items:center;width:100%}.lnrow a{flex:1;font:700 15px/1.4 var(--head);color:#2a5fb0;overflow-wrap:anywhere}</style></head><body>
 
 <div class="wrap" id="app">
   <header class="top">
@@ -600,6 +600,15 @@ function sheetHTML(){
     const li=a=>a.slice(0,8).map(c=>'<li class="row"><span class="rt"><b>'+esc(c.who)+' '+esc(c.date.slice(5))+' '+esc(TL(c.type))+'</b><small>'+(c.file!==undefined?'ファイル: '+esc(c.file)+' ／ アプリ: '+esc(c.app):esc(c.num||''))+'</small></span></li>').join('');
     return '<div class="bg" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="予定の追加"><div class="grab"></div><h2>予定を追加しますか</h2><p>追加: <b>'+x.add.length+'</b>件 ／ すでにある（そのまま）: <b>'+x.same+'</b>件'+(x.rem.length?' ／ 消す: <b>'+x.rem.length+'</b>件':'')+'</p>'+(x.rem.length?'<div><label>消す予定（ファイルの指定）</label><ul class="list">'+li(x.rem)+'</ul></div>':'')+(x.diff.length?'<div><label>番号が違う予定（アプリの内容を残します）</label><ul class="list">'+li(x.diff)+'</ul></div>':'')+'<p class="hint">今ある予定は、上書きしません。ファイルにない予定も、消しません。</p><div class="acts"><button class="btn primary" data-act="adok">追加する</button><button class="btn" data-act="close">やめる</button></div></div>';
   }
+  if(sheet.kind==='od'){
+    const D=(id,lb)=>'<div><label for="'+id+'">'+lb+'</label><input type="date" id="'+id+'"></div>';
+    return '<div class="bg" data-act="close"></div><div class="sheet" role="dialog" aria-modal="true" aria-label="発注・締め日"><div class="grab"></div><h2>発注・締め日を入れる</h2><p class="hint">にんにく発注及び月末書類締め日一覧表の日付を、入れてください。空の欄は、入れません。おりーぶ庵（㈱）のカレンダーに入ります。</p>'+
+      '<div><label for="od-ym">月（確認用）</label><input type="month" id="od-ym" value="'+esc(sheet.ym||'')+'"></div>'+
+      '<p class="hint"><b>1行目</b></p>'+D('od-a1','集計日')+D('od-b1','SCC着日')+D('od-c1','おりーぶ庵着日')+
+      '<p class="hint"><b>2行目</b></p>'+D('od-a2','集計日')+D('od-b2','SCC着日')+D('od-c2','おりーぶ庵着日')+
+      '<p class="hint"><b>にんにく使用表・各種明細の締め日</b></p>'+D('od-d','締め日（AM）')+
+      '<div class="acts"><button class="btn primary" data-act="odgo">カレンダーに入れる</button><button class="btn" data-act="close">やめる</button></div></div>';
+  }
   if(sheet.kind==='mv'){
     const x=byId(sheet.id);if(!x)return '';
     const lab=(T[x.type].s||T[x.type].label)+(x.num?'('+x.num+')':'')+(x.text?' '+x.text:'');
@@ -669,7 +678,7 @@ function renderHome(){
     return '<li><button class="co" data-act="enter" data-cid="'+c.id+'" style="--c:'+coCol(c.id)+'"><span class="av" aria-hidden="true">'+esc(Array.from(c.name)[0]||'?')+'</span><span class="rt"><b>'+esc(c.name)+'</b><small>従業員'+S.workers.filter(w=>w.cid===c.id).length+'名<br>今日あと'+td+'件 ・ 未完了'+op+'件</small></span><span class="arrow" aria-hidden="true">›</span></button></li>'}).join('')+'</ul>'+
     '<section class="panel" aria-label="みんなのカレンダー"><p class="eyebrow" style="font-size:13px">みんなのカレンダー（全企業まとめ・日付を押すと内訳）</p>'+vCal()+'</section>'+
     '<form class="card" id="cform"><div class="ah"><b>企業を追加</b></div><div class="qline"><input type="text" id="c-name" placeholder="企業名を入力（例: ○○株式会社）" autocomplete="off" aria-label="企業名"><button class="btn primary" type="submit">追加</button></div><p class="err" id="c-err" hidden></p></form>'+'<button class="btn xlb" data-act="xlsx" data-scope="all"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12M7 10l5 5 5-5M5 20h14"/></svg>全企業をExcel出力</button>';
-  h.insertAdjacentHTML('beforeend','<div class="sumg"><button class="btn" data-act="lnopen">スタッフ研修の資料</button></div><details class="adm"><summary>管理用（ふだんは使いません）　版 v7</summary><div class="sumg"><button class="btn" data-act="bkout">データを書き出す（バックアップ）</button><button class="btn" data-act="bkin">データを読み込む</button></div><div class="sumg"><button class="btn" data-act="adin">予定を追加で取り込む（上書きしない）</button><button class="btn" data-act="sy">共有の設定</button></div><input type="file" id="ad-file" accept=".json,application/json" hidden></details><input type="file" id="bk-file" accept=".json,application/json" hidden>');
+  h.insertAdjacentHTML('beforeend','<div class="sumg"><button class="btn" data-act="lnopen">スタッフ研修の資料</button></div><div class="sumg"><button class="btn" data-act="odopen">発注・締め日を入れる</button></div><details class="adm"><summary>管理用（ふだんは使いません）　版 v8</summary><div class="sumg"><button class="btn" data-act="bkout">データを書き出す（バックアップ）</button><button class="btn" data-act="bkin">データを読み込む</button></div><div class="sumg"><button class="btn" data-act="adin">予定を追加で取り込む（上書きしない）</button><button class="btn" data-act="sy">共有の設定</button></div><input type="file" id="ad-file" accept=".json,application/json" hidden></details><input type="file" id="bk-file" accept=".json,application/json" hidden>');
   document.getElementById('c-name').value=keep;
 }
 function renderAll(){
@@ -1683,6 +1692,40 @@ document.addEventListener('click',e=>{
   if(!/^https?:\/\//i.test(u)){toast('URLは、https:// から入れてください');return}
   S.links=S.links||[];S.links.push({id:uid(),name:nm,url:u});save();sheet={kind:'ln',rebuild:true};renderAll();toast('追加しました');
 });
+
+/* ---------- 発注・締め日を、毎月入れる（月末に、お知らせ） ---------- */
+const odCo=()=>S.companies.find(c=>/おりーぶ庵/.test(c.name));
+const odNextYm=()=>{const d=new Date(),n=new Date(d.getFullYear(),d.getMonth()+1,1);return n.getFullYear()+'-'+pad(n.getMonth()+1)};
+const odHas=(ym,cid)=>S.items.some(i=>i.cid===cid&&i.date&&i.date.startsWith(ym)&&i.type==='event'&&/^発注 集計日/.test(i.text||''));
+function odBar(){
+  let b=document.getElementById('odbar');
+  const co=odCo(),ym=odNextYm();
+  let show=false;
+  try{show=!!co&&new Date().getDate()>=25&&!odHas(ym,co.id)&&localStorage.getItem('koutei-od-no')!==ym&&!mvMode}catch(_){}
+  if(!show){if(b)b.remove();return}
+  if(!b){b=document.createElement('div');b.id='odbar';document.body.appendChild(b)}
+  b.innerHTML='<span>'+(+ym.slice(5))+'月の発注・締め日が、まだ入っていません。</span><button type="button" data-act="odopen">入れる</button><button type="button" data-act="oddismiss">あとで</button>';
+}
+document.addEventListener('click',e=>{
+  const el=e.target.closest('[data-act=odopen],[data-act=oddismiss],[data-act=odgo]');if(!el)return;
+  const a=el.dataset.act;
+  if(a==='oddismiss'){try{localStorage.setItem('koutei-od-no',odNextYm())}catch(_){}odBar();return}
+  if(a==='odopen'){
+    if(!odCo()){toast('おりーぶ庵（㈱）の企業が見つかりません');return}
+    sheet={kind:'od',ym:odNextYm(),rebuild:true};renderAll();return;
+  }
+  const co=odCo();if(!co)return;
+  const g=id=>(document.getElementById(id)||{}).value||'';
+  const items=[];
+  [['od-a1','発注 集計日','event'],['od-b1','SCC着日','event'],['od-c1','庵着日（にんにく）','event'],['od-a2','発注 集計日','event'],['od-b2','SCC着日','event'],['od-c2','庵着日（にんにく）','event'],['od-d','使用表・明細 締め（AM）','limit']].forEach(x=>{
+    const v=g(x[0]);if(/^\d{4}-\d{2}-\d{2}$/.test(v))items.push({cid:co.id,wname:'',date:v,type:x[2],num:'',text:x[1]});
+  });
+  if(!items.length){toast('日付を、入れてください');return}
+  const pl=adApply({items});save();sheet=null;renderAll();odBar();
+  toast(pl.add.length+'件を入れました'+(pl.same?'（同じ予定'+pl.same+'件は、そのまま）':''));
+});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden)odBar()});
+setTimeout(odBar,2500);
 
 /* ---------- boot ---------- */
 S=readLocal();S=S?normalize(S):seed();
